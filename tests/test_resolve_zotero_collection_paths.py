@@ -7,19 +7,8 @@ import pytest
 ZOTERO_STORAGE_TEMPLATE = "Zotero/storage/{item_hash}"
 
 
-@pytest.fixture(autouse=True)
-def mock_path_home(monkeypatch, tmp_path):
-    path = tmp_path / "home/testor"
-    monkeypatch.setattr('pathlib.Path.home', MagicMock(return_value=path))
-    return path
-
-
-@pytest.fixture(autouse=True)
-def create_test_pdfs(mock_path_home):
-    for h, name in [('h4sh', "some.pdf"), ("another_hash", "another.pdf")]:
-        pdf = mock_path_home / ZOTERO_STORAGE_TEMPLATE.format(item_hash=h) / name
-        pdf.parent.mkdir(parents=True, exist_ok=True)
-        pdf.touch(exist_ok=True)
+class MissingPDFError(RuntimeError):
+    ...
 
 
 def resolve_collection_files(collection: Dict) -> Dict:
@@ -33,7 +22,26 @@ def resolve_items(items: List) -> List:
 
 def get_first_pdf(item_hash: str) -> Path:
     item_dir = Path.home() / ZOTERO_STORAGE_TEMPLATE.format(item_hash=item_hash)
-    return next(item_dir.glob("*.pdf"))
+    try:
+        return next(item_dir.glob("*.pdf"))
+    except StopIteration:
+        raise MissingPDFError(f"No PDF found in the item folder for item hash {item_hash}.")
+
+
+@pytest.fixture(autouse=True)
+def mock_path_home(monkeypatch, tmp_path):
+    path = tmp_path / "home/testor"
+    monkeypatch.setattr('pathlib.Path.home', MagicMock(return_value=path))
+    return path
+
+
+@pytest.fixture(autouse=True)
+def create_test_pdfs(mock_path_home):
+    for h, name in [('h4sh', "some.pdf"), ("another_hash", "another.pdf")]:
+        pdf = mock_path_home / ZOTERO_STORAGE_TEMPLATE.format(item_hash=h) / name
+        pdf.parent.mkdir(parents=True, exist_ok=True)
+        pdf.touch(exist_ok=True)
+    (mock_path_home / ZOTERO_STORAGE_TEMPLATE.format(item_hash='missing_pdf')).mkdir(parents=True, exist_ok=True)
 
 
 def test_empty_dict_for_empty_input():
@@ -55,3 +63,8 @@ def test_single_collection_with_multiple_items():
             Path.home() / 'Zotero/storage/h4sh/some.pdf',
             Path.home() / 'Zotero/storage/another_hash/another.pdf'
         ]}}
+
+
+def test_single_collection_with_missing_pdf():
+    with pytest.raises(MissingPDFError):
+        assert resolve_collection_files({'collection': {'items': ['missing_pdf']}})
