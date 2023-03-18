@@ -12,8 +12,15 @@ class MissingPDFError(RuntimeError):
 
 
 def resolve_collection_files(collection: Dict) -> Dict:
-    return {collection_name: {'items': resolve_items(collection['items'])}
-            for collection_name, collection in collection.items()}
+    return {collection_name: _resolve_collection_node(collection) for collection_name, collection in collection.items()}
+
+
+def _resolve_collection_node(collection: Dict) -> Dict:
+    if 'items' in collection:
+        collection['items'] = resolve_items(collection['items'])
+    if 'collections' in collection:
+        collection['collections'] = resolve_collection_files(collection['collections'])
+    return collection
 
 
 def resolve_items(items: List) -> List:
@@ -37,7 +44,11 @@ def mock_path_home(monkeypatch, tmp_path):
 
 @pytest.fixture(autouse=True)
 def create_test_pdfs(mock_path_home):
-    for h, name in [('h4sh', "some.pdf"), ("another_hash", "another.pdf")]:
+    for h, name in [("h4sh", "some.pdf"),
+                    ("another_hash", "another.pdf"),
+                    ("yet_another_hash", "some.pdf"),
+                    ("col2h1", "some.pdf"),
+                    ("col2h2", "some.pdf")]:
         pdf = mock_path_home / ZOTERO_STORAGE_TEMPLATE.format(item_hash=h) / name
         pdf.parent.mkdir(parents=True, exist_ok=True)
         pdf.touch(exist_ok=True)
@@ -49,17 +60,17 @@ def test_empty_dict_for_empty_input():
 
 
 def test_single_collection_with_no_items():
-    assert resolve_collection_files({'collection': {'items': []}}) == {'collection': {'items': []}}
+    assert resolve_collection_files({'collection 1': {'items': []}}) == {'collection 1': {'items': []}}
 
 
 def test_single_collection_with_one_item():
-    assert resolve_collection_files({'collection': {'items': ['h4sh']}}) == {
-        'collection': {'items': [Path.home() / 'Zotero/storage/h4sh/some.pdf']}}
+    assert resolve_collection_files({'collection 1': {'items': ['h4sh']}}) == {
+        'collection 1': {'items': [Path.home() / 'Zotero/storage/h4sh/some.pdf']}}
 
 
 def test_single_collection_with_multiple_items():
-    assert resolve_collection_files({'collection': {'items': ['h4sh', 'another_hash']}}) == {
-        'collection': {'items': [
+    assert resolve_collection_files({'collection 1': {'items': ['h4sh', 'another_hash']}}) == {
+        'collection 1': {'items': [
             Path.home() / 'Zotero/storage/h4sh/some.pdf',
             Path.home() / 'Zotero/storage/another_hash/another.pdf'
         ]}}
@@ -68,3 +79,40 @@ def test_single_collection_with_multiple_items():
 def test_single_collection_with_missing_pdf():
     with pytest.raises(MissingPDFError):
         assert resolve_collection_files({'collection': {'items': ['missing_pdf']}})
+
+
+def test_collections_with_sub_collections_and_items():
+    assert resolve_collection_files({
+        'collection 1': {
+            'items': ['h4sh'],
+            'collections': {
+                'sub collection of collection 1': {
+                    'collections': {
+                        'sub-sub collection of collection 1': {
+                            'items': ['another_hash']
+                        }
+                    }
+                }
+            }
+        },
+        'collection 2': {
+            'items': ['col2h1', 'col2h2']
+        }
+    }) == {
+               'collection 1': {
+                   'items': [Path.home() / 'Zotero/storage/h4sh/some.pdf'],
+                   'collections': {
+                       'sub collection of collection 1': {
+                           'collections': {
+                               'sub-sub collection of collection 1': {
+                                   'items': [Path.home() / 'Zotero/storage/another_hash/another.pdf']
+                               }
+                           }
+                       }
+                   }
+               },
+               'collection 2': {
+                   'items': [Path.home() / 'Zotero/storage/col2h1/some.pdf',
+                             Path.home() / 'Zotero/storage/col2h2/some.pdf']
+               }
+           }
