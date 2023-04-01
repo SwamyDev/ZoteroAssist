@@ -1,15 +1,26 @@
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Any
 
 import streamlit as st
 from PyPDF2 import PdfReader
 
 from zotero_assist.result import Result
+from zotero_assist.widgets.content import Content
 from zotero_assist.zot.retrieve_all_local_pdfs import retrieve_all_local_pdfs
 
-st.title('Zotero Assist')
+REGISTRY = dict()
 
-ZOTERO_DB_FILE = Path.home() / "Zotero/zotero.sqlite"
+
+def register_service(name: str, service: Any) -> None:
+    REGISTRY[name] = service
+
+
+def has_service(name: str) -> bool:
+    return name in REGISTRY
+
+
+def locate_service(name: str) -> Any:
+    return REGISTRY[name]
 
 
 @st.cache_data
@@ -47,9 +58,29 @@ def add_zotero_pdfs(filenames: Sequence[Path]) -> None:
     for file in filenames:
         with st.expander(file.stem):
             st.write(get_available_summary_for(file))
+            st.code(file.as_posix(), 'bash')
+            st.button('select', key=file.stem, on_click=update_content_widget, kwargs=dict(selected_pdf=file))
 
+
+def update_content_widget(selected_pdf: Path) -> None:
+    if has_service('content'):
+        content_widget = locate_service('content')
+        content_widget.show_summary(selected_pdf)
+        content_widget.show_pdf(selected_pdf)
+
+
+st.set_page_config(page_title='zotero-assist', layout="wide")
+st.title('Zotero Assist')
 
 pdf_filenames = get_all_zotero_pdfs()
 
 with st.sidebar:
     add_zotero_pdfs(pdf_filenames[:2])
+
+interaction, content = st.columns([1, 2])
+
+with interaction:
+    st.write("interact here")
+
+with content:
+    register_service('content', Content(content))
