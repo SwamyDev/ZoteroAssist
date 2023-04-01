@@ -53,11 +53,11 @@ def zotero_db(zotero_db_conn, sample_collections, sample_items, sample_collectio
 
 def create_zotero_tables(cursor):
     cursor.execute('''CREATE TABLE collections
-                 (id INTEGER PRIMARY KEY, name TEXT, parentCollectionID INTEGER)''')
+                 (collectionID INTEGER PRIMARY KEY, collectionName TEXT, parentCollectionID INTEGER)''')
     cursor.execute('''CREATE TABLE items
-                 (id INTEGER PRIMARY KEY, key TEXT)''')
+                 (itemID INTEGER PRIMARY KEY, key TEXT)''')
     cursor.execute('''CREATE TABLE collectionItems
-                 (collectionID INTEGER, itemID INTEGER, FOREIGN KEY(collectionID) REFERENCES collections(id), FOREIGN KEY(itemID) REFERENCES items(id))''')
+                 (collectionID INTEGER, itemID INTEGER, FOREIGN KEY(collectionID) REFERENCES collections(collectionID), FOREIGN KEY(itemID) REFERENCES items(itemID))''')
 
 
 def add_to_zotero_db(cursor, zotero_collections, zotero_items, collection_items):

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 ZOTERO_STORAGE_TEMPLATE = "Zotero/storage/{item_hash}"
 
@@ -21,12 +21,13 @@ def _resolve_collection_node(collection: Dict) -> Dict:
 
 
 def _resolve_items(items: List) -> List:
-    return [Path.home() / ZOTERO_STORAGE_TEMPLATE.format(item_hash=i) / _get_first_pdf(i) for i in items]
+    maybe_items = [_get_first_pdf(i) for i in items]
+    return [i for i in maybe_items if i is not None]
 
 
-def _get_first_pdf(item_hash: str) -> Path:
+def _get_first_pdf(item_hash: str) -> Optional[Path]:
     item_dir = Path.home() / ZOTERO_STORAGE_TEMPLATE.format(item_hash=item_hash)
     try:
         return next(item_dir.glob("*.pdf"))
     except StopIteration:
-        raise MissingPDFError(f"No PDF found in the item folder for item hash {item_hash}.")
+        return None

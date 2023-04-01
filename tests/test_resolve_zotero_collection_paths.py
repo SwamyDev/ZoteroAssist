@@ -49,8 +49,7 @@ def test_single_collection_with_multiple_items():
 
 
 def test_single_collection_with_missing_pdf():
-    with pytest.raises(MissingPDFError):
-        assert resolve_collection_files({'collection': {'items': ['missing_pdf']}})
+    assert resolve_collection_files({'collection': {'items': ['missing_pdf']}}) == {'collection': {'items': []}}
 
 
 def test_collections_with_sub_collections_and_items():
