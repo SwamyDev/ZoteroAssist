@@ -23,6 +23,15 @@ def save_history_for_pdf(history: Sequence[Dict], pdf_file: Path):
     return (get_llaman_index_dir_for_pdf(pdf_file) / "history.json").write_text(json.dumps(history))
 
 
+class RemoveQuery:
+    def __init__(self):
+        self.response = "42"
+        self.extra_info = dict(source_pdf="/home/some/pdf.pdf", page_idx=3)
+
+    def get_formatted_sources(self):
+        return "the formatted sources"
+
+
 class Interaction:
     def __init__(self, session):
         self.session = session
@@ -38,8 +47,10 @@ class Interaction:
     def send_to_selected(self, msg: str, history_container, mode=None):
         pdf_file = self.session['selected_pdf']
         interaction_index = retrieve_llama_index_for_pdf(pdf_file)
-        # response = interaction_index.query(msg, mode=mode or 'default').response
-        response = "42"
+        # query = interaction_index.query(msg, mode=mode or 'default')
+        query = RemoveQuery()
+        self.session['query'] = dict(page_idx=query.extra_info['page_idx'], source=query.get_formatted_sources())
+        response = query.response
         history = self.session['chat_history']
         i = len(history)
         history.append({'content': msg, 'user': True})
@@ -47,4 +58,4 @@ class Interaction:
         save_history_for_pdf(history, pdf_file)
         with history_container:
             message(msg, is_user=True, key=str(i))
-            message(response, is_user=False, key=str(i+1))
+            message(response, is_user=False, key=str(i + 1))

@@ -92,7 +92,7 @@ pdf_filenames = get_all_zotero_pdfs()
 with st.sidebar:
     add_zotero_pdfs(pdf_filenames[:2])
 
-interaction, content = st.columns([1, 2])
+interaction, content = st.columns([1, 1])
 
 with interaction:
     chat_container = st.container()

@@ -28,7 +28,11 @@ class Content:
             st.markdown(summary)
 
     def show_pdf(self) -> None:
-        pdf_file = self.session['selected_pdf']
-        pdf = PdfReader(pdf_file)
-        for page in pdf.pages:
-            st.write(page.extract_text())
+        if 'query' in self.session:
+            query = self.session['query']
+            pdf_file = self.session['selected_pdf']
+            pdf_pages = PdfReader(pdf_file).pages
+            st.subheader("Summary of query source:")
+            st.write(query['source'])
+            st.subheader("Queried PDF page:")
+            st.write(pdf_pages[query['page_idx']].extract_text())

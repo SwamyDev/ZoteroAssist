@@ -1,13 +1,17 @@
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Sequence
 
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfReader, PageObject
 
 
-def read_pdf_pages(pdf: Path) -> List[str]:
+@dataclass
+class PdfPages:
+    src: Path
+    pages: Sequence[PageObject]
+
+
+def read_pdf_pages(pdf: Path) -> PdfPages:
     with open(pdf, "rb") as f:
         pdf_reader = PdfReader(f)
-        pages = []
-        for page in pdf_reader.pages:
-            pages.append(page.extract_text())
-        return pages
+        return PdfPages(pdf, pdf_reader.pages)
