@@ -91,9 +91,12 @@ pdf_filenames = get_all_zotero_pdfs()
 
 with st.sidebar:
     with st.expander("settings"):
+        st.session_state['index_type'] = st.selectbox("Index type:", ['tree', 'vector'])
         st.session_state['index_model'] = st.selectbox("Index model:", ['text-ada-001'])
         st.session_state['max_history'] = st.number_input("Length of chat history:", min_value=1, value=100)
+
     st.markdown('---')
+    st.subheader("Papers:")
     add_zotero_pdfs(pdf_filenames[:2])
 
 interaction, content = st.columns([1, 1])
@@ -115,6 +118,7 @@ with interaction:
 with content:
     content_widget = make_content()
     if has_pfd_selected():
+        st.subheader("Key concepts:")
         content_widget.show_summary()
         with st.container():
             st.write("""<div class='YScrollMarker'/>""", unsafe_allow_html=True)

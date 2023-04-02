@@ -7,12 +7,12 @@ from pathlib import Path
 
 from streamlit_chat import message
 
-from zotero_assist.constants import get_llaman_index_dir_for_pdf
+from zotero_assist.constants import get_llaman_index_info_for_pdf
 from zotero_assist.knowledge.retrieve_llama_index_for_pdf import retrieve_llama_index_for_pdf
 
 
 def load_history_for_pdf(pdf_file: Path) -> Sequence[Dict]:
-    history_file = get_llaman_index_dir_for_pdf(pdf_file) / "history.json"
+    history_file = get_llaman_index_info_for_pdf(pdf_file)[0] / "history.json"
     if history_file.exists():
         return json.loads(history_file.read_text())
     else:
@@ -20,7 +20,7 @@ def load_history_for_pdf(pdf_file: Path) -> Sequence[Dict]:
 
 
 def save_history_for_pdf(history: Sequence[Dict], pdf_file: Path):
-    return (get_llaman_index_dir_for_pdf(pdf_file) / "history.json").write_text(json.dumps(history))
+    return (get_llaman_index_info_for_pdf(pdf_file)[0] / "history.json").write_text(json.dumps(history))
 
 
 class RemoveQuery:
@@ -48,9 +48,11 @@ class Interaction:
     def send_to_selected(self, msg: str, history_container, mode=None):
         pdf_file = self.session['selected_pdf']
         interaction_index = retrieve_llama_index_for_pdf(pdf_file)
-        # query = interaction_index.query(msg, mode=mode or 'default')
-        query = RemoveQuery()
-        self.session['query'] = dict(page_idx=query.extra_info['page_idx'], source=query.get_formatted_sources())
+        query = interaction_index.query(msg, mode=mode or 'default')
+        if len(query.source_nodes) > 0:
+            first_source = query.source_nodes[0]
+            self.session['query'] = dict(page_idx=first_source.extra_info['page_idx'],
+                                         source=first_source.source_text)
         response = query.response
         history = self.session['chat_history']
         i = len(history)
