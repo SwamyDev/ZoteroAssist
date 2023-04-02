@@ -1,13 +1,12 @@
-import streamlit as st
-
 from pathlib import Path
 
-from llama_index import GPTVectorStoreIndex, GPTTreeIndex
+import streamlit as st
+from llama_index import GPTTreeIndex, GPTSimpleVectorIndex
 
 ZOTERO_DB_FILE = Path.home() / "Zotero/zotero.sqlite"
 LLAMA_INDICES_ROOT = Path.home() / ".zotero-assist/llama_indices/"
 INDEX_TYPE_TO_CLS = {
-    'vector': GPTVectorStoreIndex,
+    'vector': GPTSimpleVectorIndex,
     'tree': GPTTreeIndex,
 }
 

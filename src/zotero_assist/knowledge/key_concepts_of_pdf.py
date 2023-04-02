@@ -4,7 +4,7 @@ from zotero_assist.constants import get_llaman_index_info_for_pdf
 from zotero_assist.knowledge.query_index_for_summary import query_index_for_summary
 from zotero_assist.knowledge.retrieve_llama_index_for_pdf import retrieve_llama_index_for_pdf
 
-PROMPT = "List key concepts using markdown bullet-points. Limit yourself to a maximum of 3 items."
+PROMPT = "Find the 3 most important concepts of this text, and format it as markdown bullet point list."
 
 
 def key_concepts_of_pdf(pdf_file: Path) -> str:

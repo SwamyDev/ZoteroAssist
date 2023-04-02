@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Sequence, Any
+from typing import Sequence
 
 import streamlit as st
 from PyPDF2 import PdfReader
 
+from zotero_assist.billing import query_billing_info
 from zotero_assist.result import Result
 from zotero_assist.widgets.content import Content
 from zotero_assist.widgets.interaction import Interaction
@@ -85,13 +86,19 @@ def clear_input():
 
 
 st.set_page_config(page_title='zotero-assist', layout="wide")
+
+billing = query_billing_info()
+st.subheader("Billing:")
+st.write(f"Usage: {billing.total_usage_usd:.2f}USD / {billing.limit_usd:.2f}USD")
+st.write(f"Today's usage: {billing.today_usage_usd:.2f}USD")
+
 st.title('Zotero Assist')
 
 pdf_filenames = get_all_zotero_pdfs()
 
 with st.sidebar:
     with st.expander("settings"):
-        st.session_state['index_type'] = st.selectbox("Index type:", ['tree', 'vector'])
+        st.session_state['index_type'] = st.selectbox("Index type:", ['vector', 'tree'])
         st.session_state['index_model'] = st.selectbox("Index model:", ['text-ada-001'])
         st.session_state['max_history'] = st.number_input("Length of chat history:", min_value=1, value=100)
 
