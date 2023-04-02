@@ -100,6 +100,7 @@ with st.sidebar:
     with st.expander("settings"):
         st.session_state['index_type'] = st.selectbox("Index type:", ['vector', 'tree'])
         st.session_state['index_model'] = st.selectbox("Index model:", ['text-ada-001'])
+        st.session_state['chat_model'] = st.selectbox("Chat model:", ['text-ada-001'])
         st.session_state['max_history'] = st.number_input("Length of chat history:", min_value=1, value=100)
 
     st.markdown('---')

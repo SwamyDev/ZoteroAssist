@@ -5,6 +5,8 @@ from typing import Sequence, Dict
 
 from pathlib import Path
 
+from langchain import OpenAI
+from llama_index import LLMPredictor
 from streamlit_chat import message
 
 from zotero_assist.constants import get_llaman_index_info_for_pdf
@@ -47,8 +49,11 @@ class Interaction:
 
     def send_to_selected(self, msg: str, history_container, mode=None):
         pdf_file = self.session['selected_pdf']
+        chat_model = LLMPredictor(llm=OpenAI(model_name=st.session_state.chat_model))
         interaction_index = retrieve_llama_index_for_pdf(pdf_file)
-        query = interaction_index.query(msg, mode=mode or 'default')
+        with st.spinner("thinking..."):
+            query = interaction_index.query(msg, mode=mode or 'default', llm_predictor=chat_model)
+
         if len(query.source_nodes) > 0:
             first_source = query.source_nodes[0]
             self.session['query'] = dict(page_idx=first_source.extra_info['page_idx'],
