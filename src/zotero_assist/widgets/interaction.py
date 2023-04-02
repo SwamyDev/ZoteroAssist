@@ -9,12 +9,12 @@ from langchain import OpenAI
 from llama_index import LLMPredictor
 from streamlit_chat import message
 
-from zotero_assist.constants import get_llaman_index_info_for_pdf
+from zotero_assist.constants import get_llama_index_info_for_pdf
 from zotero_assist.knowledge.retrieve_llama_index_for_pdf import retrieve_llama_index_for_pdf
 
 
 def load_history_for_pdf(pdf_file: Path) -> Sequence[Dict]:
-    history_file = get_llaman_index_info_for_pdf(pdf_file)[0] / "history.json"
+    history_file = get_llama_index_info_for_pdf(pdf_file)[0] / "history.json"
     if history_file.exists():
         return json.loads(history_file.read_text())
     else:
@@ -22,7 +22,7 @@ def load_history_for_pdf(pdf_file: Path) -> Sequence[Dict]:
 
 
 def save_history_for_pdf(history: Sequence[Dict], pdf_file: Path):
-    return (get_llaman_index_info_for_pdf(pdf_file)[0] / "history.json").write_text(json.dumps(history))
+    return (get_llama_index_info_for_pdf(pdf_file)[0] / "history.json").write_text(json.dumps(history))
 
 
 class RemoveQuery:
@@ -56,8 +56,9 @@ class Interaction:
 
         if len(query.source_nodes) > 0:
             first_source = query.source_nodes[0]
-            self.session['query'] = dict(page_idx=first_source.extra_info['page_idx'],
-                                         source=first_source.source_text)
+            page = 0 if first_source.extra_info is None else first_source.extra_info['page_idx']
+            self.session['query'] = dict(page_idx=page, source=first_source.source_text)
+
         response = query.response
         history = self.session['chat_history']
         i = len(history)

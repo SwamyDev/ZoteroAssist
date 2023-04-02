@@ -99,8 +99,8 @@ pdf_filenames = get_all_zotero_pdfs()
 with st.sidebar:
     with st.expander("settings"):
         st.session_state['index_type'] = st.selectbox("Index type:", ['vector', 'tree'])
-        st.session_state['index_model'] = st.selectbox("Index model:", ['text-ada-001'])
-        st.session_state['chat_model'] = st.selectbox("Chat model:", ['text-ada-001'])
+        st.session_state['index_model'] = st.selectbox("Index model:", ['text-ada-001', 'text-babbage-001', 'text-curie-001', 'gpt-3.5-turbo', 'text-davinci-003'])
+        st.session_state['chat_model'] = st.selectbox("Chat model:", ['text-ada-001', 'text-babbage-001', 'text-curie-001', 'gpt-3.5-turbo'])
         st.session_state['max_history'] = st.number_input("Length of chat history:", min_value=1, value=100)
 
     st.markdown('---')
@@ -120,7 +120,7 @@ with interaction:
     with input_container:
         message = get_message()
         if message and has_pfd_selected():
-            chat_widget.send_to_selected(message, chat_container, mode='embedding')
+            chat_widget.send_to_selected(message, chat_container, mode='default')
             st.session_state.message_to_send = ''
 
 with content:

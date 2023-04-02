@@ -11,7 +11,7 @@ INDEX_TYPE_TO_CLS = {
 }
 
 
-def get_llaman_index_info_for_pdf(pdf_file):
+def get_llama_index_info_for_pdf(pdf_file):
     index_type = st.session_state.index_type
     index_model = st.session_state.index_model
     index_cls = INDEX_TYPE_TO_CLS[index_type]
