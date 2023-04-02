@@ -39,9 +39,10 @@ class Interaction:
     def load_selected_history(self, history_container) -> None:
         pdf_file = self.session['selected_pdf']
         self.session['chat_history'] = load_history_for_pdf(pdf_file)
+        max_history = min(self.session['max_history'], len(self.session['chat_history']))
         with history_container:
             st.write("""<div class='YScrollMarker'/>""", unsafe_allow_html=True)
-            for i, msg in enumerate(self.session['chat_history']):
+            for i, msg in enumerate(self.session['chat_history'][-max_history:]):
                 message(msg['content'], is_user=msg['user'], key=str(i))
 
     def send_to_selected(self, msg: str, history_container, mode=None):

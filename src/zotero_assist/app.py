@@ -90,6 +90,10 @@ st.title('Zotero Assist')
 pdf_filenames = get_all_zotero_pdfs()
 
 with st.sidebar:
+    with st.expander("settings"):
+        st.session_state['index_model'] = st.selectbox("Index model:", ['text-ada-001'])
+        st.session_state['max_history'] = st.number_input("Length of chat history:", min_value=1, value=100)
+    st.markdown('---')
     add_zotero_pdfs(pdf_filenames[:2])
 
 interaction, content = st.columns([1, 1])
@@ -106,6 +110,7 @@ with interaction:
         message = get_message()
         if message and has_pfd_selected():
             chat_widget.send_to_selected(message, chat_container, mode='embedding')
+            st.session_state.message_to_send = ''
 
 with content:
     content_widget = make_content()
