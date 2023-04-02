@@ -6,21 +6,8 @@ from PyPDF2 import PdfReader
 
 from zotero_assist.result import Result
 from zotero_assist.widgets.content import Content
+from zotero_assist.widgets.interaction import Interaction
 from zotero_assist.zot.retrieve_all_local_pdfs import retrieve_all_local_pdfs
-
-REGISTRY = dict()
-
-
-def register_service(name: str, service: Any) -> None:
-    REGISTRY[name] = service
-
-
-def has_service(name: str) -> bool:
-    return name in REGISTRY
-
-
-def locate_service(name: str) -> Any:
-    return REGISTRY[name]
 
 
 @st.cache_data
@@ -59,14 +46,42 @@ def add_zotero_pdfs(filenames: Sequence[Path]) -> None:
         with st.expander(file.stem):
             st.write(get_available_summary_for(file))
             st.code(file.as_posix(), 'bash')
-            st.button('select', key=file.stem, on_click=update_content_widget, kwargs=dict(selected_pdf=file))
+            st.button('select', key=file.stem, on_click=select_pdf, kwargs=dict(pdf=file))
 
 
-def update_content_widget(selected_pdf: Path) -> None:
-    if has_service('content'):
-        content_widget = locate_service('content')
-        content_widget.show_summary(selected_pdf)
-        content_widget.show_pdf(selected_pdf)
+def select_pdf(pdf: Path) -> None:
+    if 'chat_history' in st.session_state:
+        st.session_state['chat_history'].clear()
+    if 'message_to_send' in st.session_state:
+        st.session_state.message_to_send = ''
+
+    st.session_state['selected_pdf'] = pdf
+
+
+@st.cache_resource
+def make_interaction():
+    return Interaction(st.session_state)
+
+
+@st.cache_resource
+def make_content():
+    return Content(st.session_state)
+
+
+def has_pfd_selected():
+    return 'selected_pdf' in st.session_state
+
+
+def get_message() -> str:
+    if 'message_to_send' not in st.session_state:
+        st.session_state.message_to_send = ''
+    st.text_input("You: ", "", key="input", on_change=clear_input)
+    return st.session_state.message_to_send
+
+
+def clear_input():
+    st.session_state.message_to_send = st.session_state.input
+    st.session_state.input = ''
 
 
 st.set_page_config(page_title='zotero-assist', layout="wide")
@@ -80,7 +95,33 @@ with st.sidebar:
 interaction, content = st.columns([1, 2])
 
 with interaction:
-    st.write("interact here")
+    chat_container = st.container()
+    input_container = st.container()
+    chat_widget = make_interaction()
+
+    if has_pfd_selected():
+        chat_widget.load_selected_history(chat_container)
+
+    with input_container:
+        message = get_message()
+        if message and has_pfd_selected():
+            chat_widget.send_to_selected(message, chat_container, mode='embedding')
 
 with content:
-    register_service('content', Content(content))
+    content_widget = make_content()
+    if has_pfd_selected():
+        content_widget.show_summary()
+        with st.container():
+            st.write("""<div class='YScrollMarker'/>""", unsafe_allow_html=True)
+            content_widget.show_pdf()
+
+st.markdown("""
+<style>
+[data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
+    height: 700px;
+    max-height: 700px;
+    overflow-y: auto;
+    overflow-x: hidden;
+} 
+</style>
+""", unsafe_allow_html=True)
